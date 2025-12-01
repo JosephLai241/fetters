@@ -8,7 +8,7 @@ license = "MIT"
 name = "fetters"
 readme = "README.md"
 repository = "https://github.com/JosephLai241/fetters"
-version = "3.0.0"
+version = "3.1.0"
 
 [dependencies]
 chrono = "0.4.41"
