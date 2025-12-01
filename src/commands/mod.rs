@@ -3,6 +3,7 @@
 pub mod add;
 pub mod config;
 pub mod delete;
+pub mod export;
 pub mod insights;
 pub mod list;
 pub mod open;
