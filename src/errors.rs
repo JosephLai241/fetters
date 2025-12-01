@@ -31,14 +31,15 @@ pub enum FettersError {
     #[error("No job applications tracked for the current sprint [{0}]")]
     NoJobsAvailable(String),
 
+    /// This error is used when a result returns an error message. This is currently used to
+    /// propagate the error returned when attempting to call `book.set_sheet_name()`.
+    #[error("Set sheet name error: {0}")]
+    SheetNameError(String),
+
     /// This error may be raised if the user attempts to create two new sprints in the same day,
     /// causing a sprint naming conflict (all sprint names should be unique).
     #[error("There is already a sprint with name {0}. Try renaming the sprint.")]
     SprintNameConflict(String),
-
-    /// This error is used when a result returns an error message.
-    #[error("{0}")]
-    StringError(String),
 
     /// Something went wrong when trying to connect to the SQLite database.
     #[error("Failed to connect to SQLite database: {0}")]
@@ -63,6 +64,6 @@ pub enum FettersError {
 
 impl From<&str> for FettersError {
     fn from(value: &str) -> Self {
-        Self::StringError(value.to_string())
+        Self::SheetNameError(value.to_string())
     }
 }
