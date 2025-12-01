@@ -31,6 +31,11 @@ pub enum FettersError {
     #[error("No job applications tracked for the current sprint [{0}]")]
     NoJobsAvailable(String),
 
+    /// This error is used when a result returns an error message. This is currently used to
+    /// propagate the error returned when attempting to call `book.set_sheet_name()`.
+    #[error("Set sheet name error: {0}")]
+    SheetNameError(String),
+
     /// This error may be raised if the user attempts to create two new sprints in the same day,
     /// causing a sprint naming conflict (all sprint names should be unique).
     #[error("There is already a sprint with name {0}. Try renaming the sprint.")]
@@ -51,4 +56,14 @@ pub enum FettersError {
     /// An unknown error occurred.
     #[error("{0}")]
     UnknownError(String),
+
+    /// Something fucked up when exporting job applications to XLSX.
+    #[error("XLSX write error: {0}")]
+    XLSXError(#[from] umya_spreadsheet::XlsxError),
+}
+
+impl From<&str> for FettersError {
+    fn from(value: &str) -> Self {
+        Self::SheetNameError(value.to_string())
+    }
 }

@@ -8,7 +8,7 @@ license = "MIT"
 name = "fetters"
 readme = "README.md"
 repository = "https://github.com/JosephLai241/fetters"
-version = "3.0.0"
+version = "3.1.0"
 
 [dependencies]
 chrono = "0.4.41"
@@ -27,6 +27,7 @@ strum = { version = "0.27.2", features = ["derive"] }
 tabled = { version = "0.20.0", features = ["ansi"] }
 thiserror = "2.0.12"
 toml = "0.9.5"
+umya-spreadsheet = "2.3.3"
 
 [dev-dependencies]
 dotenvy = "0.15.7"

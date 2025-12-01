@@ -128,6 +128,19 @@ impl TabledJob {
 
         field_name.to_string()
     }
+
+    /// Convert the struct to a row of strings to write to a spreadsheet when exporting job
+    /// applications.
+    pub fn convert_to_row(&self) -> Vec<String> {
+        vec![
+            self.created.clone(),
+            self.company_name.clone(),
+            self.title.clone().unwrap_or("N/A".to_string()),
+            self.status.clone().unwrap_or("N/A".to_string()),
+            self.link.clone().unwrap_or("".to_string()),
+            self.notes.clone().unwrap_or("".to_string()),
+        ]
+    }
 }
 
 impl Display for TabledJob {

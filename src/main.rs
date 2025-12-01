@@ -18,6 +18,7 @@ use crate::cli::{Cli, Command, ConfigOption, SprintOption};
 use crate::commands::add::add_job;
 use crate::commands::config::edit_config;
 use crate::commands::delete::delete_job;
+use crate::commands::export::export_jobs;
 use crate::commands::insights::show_insights;
 use crate::commands::list::list_jobs;
 use crate::commands::open::open_application;
@@ -76,6 +77,13 @@ fn main() -> Result<(), FettersError> {
         Command::Delete(mut query_args) => {
             if let Err(error) =
                 delete_job(&mut database.connection, &mut query_args, &current_sprint)
+            {
+                println!("{}", error.red().bold());
+            }
+        }
+        Command::Export(mut export_args) => {
+            if let Err(error) =
+                export_jobs(&mut database.connection, &mut export_args, &current_sprint)
             {
                 println!("{}", error.red().bold());
             }
