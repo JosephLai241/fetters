@@ -1,6 +1,6 @@
 //! Contains a function called by the CLI when exporting jobs from SQLite.
 
-use std::env;
+use std::{env, path::Path};
 
 use chrono::Local;
 use diesel::SqliteConnection;
@@ -63,22 +63,22 @@ pub fn export_jobs(
         )
     };
 
-    let export_path = format!(
-        "{}/{}",
-        export_args
+    let export_path = Path::new(
+        &export_args
             .directory
             .clone()
             .unwrap_or(env::current_dir()?.to_string_lossy().to_string()),
-        filename,
-    );
+    )
+    .join(Path::new(&filename));
 
     umya_spreadsheet::writer::xlsx::write(&spreadsheet, &export_path)?;
 
     println!(
         "{}",
         format!(
-            "Successfully exported all jobs for sprint {} to path: {export_path}!",
-            target_sprint.unwrap_or("unknown".to_string())
+            "Successfully exported all jobs for sprint {} to path: {}!",
+            target_sprint.unwrap_or("unknown".to_string()),
+            export_path.to_string_lossy()
         )
         .green()
         .bold()
