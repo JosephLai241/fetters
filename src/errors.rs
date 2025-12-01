@@ -36,6 +36,10 @@ pub enum FettersError {
     #[error("There is already a sprint with name {0}. Try renaming the sprint.")]
     SprintNameConflict(String),
 
+    /// This error is used when a result returns an error message.
+    #[error("{0}")]
+    StringError(String),
+
     /// Something went wrong when trying to connect to the SQLite database.
     #[error("Failed to connect to SQLite database: {0}")]
     SQLiteConnectionError(#[from] diesel::ConnectionError),
@@ -51,4 +55,14 @@ pub enum FettersError {
     /// An unknown error occurred.
     #[error("{0}")]
     UnknownError(String),
+
+    /// Something fucked up when exporting job applications to XLSX.
+    #[error("XLSX write error: {0}")]
+    XLSXError(#[from] umya_spreadsheet::XlsxError),
+}
+
+impl From<&str> for FettersError {
+    fn from(value: &str) -> Self {
+        Self::StringError(value.to_string())
+    }
 }
