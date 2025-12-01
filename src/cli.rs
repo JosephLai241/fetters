@@ -27,6 +27,8 @@ pub enum Command {
     Config(ConfigOption),
     /// Delete a tracked job application.
     Delete(QueryArgs),
+    /// Export all tracked job applications from a job sprint to a spreadsheet.
+    Export(ExportArgs),
     /// Show job application inslghts.
     Insights,
     /// List job applications.
@@ -41,7 +43,7 @@ pub enum Command {
 }
 
 /// All flags you can use to query jobs.
-#[derive(Debug, Parser)]
+#[derive(Debug, Default, Parser)]
 pub struct QueryArgs {
     #[arg(
         short,
@@ -105,4 +107,29 @@ pub enum SprintOption {
     ShowAll,
     /// Set the current job sprint.
     Set,
+}
+
+/// All subcommands for exporting tracked jobs.
+#[derive(Debug, Parser)]
+pub struct ExportArgs {
+    #[arg(
+        short,
+        long,
+        help = "Export the spreadsheet to the given directory path. Defaults to the current directory if this is not provided."
+    )]
+    pub directory: Option<String>,
+
+    #[arg(
+        short,
+        long,
+        help = "Set a filename for the exported file. The '.xlsx' extension is automatically added if it is not provided. Defaults to '<DATE>-fetters-export-sprint-<SPRINT_NAME>.xlsx'"
+    )]
+    pub filename: Option<String>,
+
+    #[arg(
+        short,
+        long,
+        help = "Select a sprint to export from. Defaults to the current sprint."
+    )]
+    pub sprint: Option<String>,
 }
