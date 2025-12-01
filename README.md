@@ -24,7 +24,6 @@
 - [Installation](#installation)
   - [`cargo install`](#cargo-install)
   - [Compile From Source](#compile-from-source)
-  - [Or Download a Binary](#or-download-a-binary)
 - [Stored Attributes](#stored-attributes)
 - [Job Sprints](#job-sprints)
 - [Walkthrough](#walkthrough)
@@ -38,6 +37,7 @@
   - [Listing/Searching Jobs](#listingsearching-jobs)
   - [Display Job Insights](#display-job-insights)
   - [Opening Links](#opening-links)
+  - [Exporting Jobs to XLSX](#exporting-jobs-to-xlsx)
 - [Conclusion](#conclusion)
 
 # Introduction
@@ -60,6 +60,7 @@ This program enables you to:
 - Conveniently open links to job applications in your browser (given a URL) or document viewer (given a local filepath).
 - Display application insights (ie. How many applications are in progress, how many have been rejected, how many are in pending status, etc.).
 - Group job applications by sprints.
+- Export tracked job applications to an XLSX file.
 
 # Installation
 
@@ -94,10 +95,6 @@ $ mv target/release/fetters /some/directory/
 $ cd /some/directory
 $ ./fetters -V
 ```
-
-## Or Download a Binary
-
-If you do not want to compile `fetters`, you can also download a binary attached to a release in the [Releases] section.
 
 # Stored Attributes
 
@@ -328,9 +325,21 @@ Jobs matching your query parameters will be displayed in a table. Once a job is 
 
 <img width="2463" height="1279" alt="image" src="https://github.com/user-attachments/assets/d77b362c-0755-442c-8dc1-cc8d0fe276a3" />
 
+## Exporting Jobs to XLSX
+
+You can export all tracked job applications from a job sprint to an XLSX file. The rows will be color-coded based on the job application status, similar to how applications are listed with the `list` subcommand.
+
+```
+fetters export [OPTIONS]
+
+Options:
+  -d, --directory <DIRECTORY>   Export the spreadsheet to the given directory path.
+  -f, --filename <FILENAME>     Set a filename for the exported file.
+  -s, --sprint <SPRINT>         Select a sprint to export from. Defaults to the current sprint.
+```
+
 # Conclusion
 
 I wish you the best of luck with finding a job. We all know how rough it is out there. I hope this little CLI tool helps you track your applications during the struggle and that you won't have to use this for too long until you find your next opportunity 🤞🏻.
 
 [projectdirs documentation]: https://docs.rs/directories/6.0.0/directories/struct.ProjectDirs.html#method.data_dir
-[releases]: https://github.com/JosephLai241/fetters/releases
