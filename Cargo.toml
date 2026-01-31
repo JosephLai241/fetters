@@ -17,10 +17,11 @@ diesel = { version = "2.2.12", features = ["returning_clauses_for_sqlite_3_35", 
 diesel_migrations = { version = "2.2.0", features = ["sqlite"] }
 directories = "6.0.0"
 edit = "0.1.5"
-inquire = "0.7.5"
+inquire = { version = "0.7.5", features = ["date"] }
 lazy_static = "1.5.0"
 open = "5.3.2"
 owo-colors = "4.2.2"
+ptree = "0.4"
 regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 strum = { version = "0.27.2", features = ["derive"] }
