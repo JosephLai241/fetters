@@ -96,6 +96,10 @@ pub struct TabledJob {
     #[tabled(rename = "Status")]
     #[tabled(display("display::option", "N/A"))]
     pub status: Option<String>,
+    /// The number of interview stages tracked for this job application.
+    #[tabled(rename = "Num Stages")]
+    #[tabled(display("display::option", ""))]
+    pub stages: Option<i32>,
     /// The link to the job application.
     #[tabled(rename = "Link")]
     #[tabled(display("display::option", "N/A"))]
