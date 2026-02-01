@@ -1,6 +1,19 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    interview_stages (id) {
+        id -> Integer,
+        job_id -> Integer,
+        stage_number -> Integer,
+        name -> Nullable<Text>,
+        status -> Text,
+        scheduled_date -> Text,
+        notes -> Nullable<Text>,
+        created -> Text,
+    }
+}
+
+diesel::table! {
     jobs (id) {
         id -> Integer,
         created -> Text,
@@ -37,8 +50,15 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(interview_stages -> jobs (job_id));
 diesel::joinable!(jobs -> sprints (sprint_id));
 diesel::joinable!(jobs -> statuses (status_id));
 diesel::joinable!(jobs -> titles (title_id));
 
-diesel::allow_tables_to_appear_in_same_query!(jobs, sprints, statuses, titles,);
+diesel::allow_tables_to_appear_in_same_query!(
+    interview_stages,
+    jobs,
+    sprints,
+    statuses,
+    titles,
+);

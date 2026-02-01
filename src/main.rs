@@ -14,7 +14,7 @@ use clap::Parser;
 use lazy_static::lazy_static;
 use owo_colors::OwoColorize;
 
-use crate::cli::{Cli, Command, ConfigOption, SprintOption};
+use crate::cli::{Cli, Command, ConfigOption, SprintOption, StageOption};
 use crate::commands::add::add_job;
 use crate::commands::config::edit_config;
 use crate::commands::delete::delete_job;
@@ -25,6 +25,7 @@ use crate::commands::open::open_application;
 use crate::commands::sprint::{
     create_new_sprint, set_sprint, show_all_sprints, show_current_sprint,
 };
+use crate::commands::stage::{add_stage, delete_stage, show_stage_tree, update_stage};
 use crate::commands::update::update_job;
 use crate::config::configuration::Config;
 use crate::errors::FettersError;
@@ -123,6 +124,36 @@ fn main() -> Result<(), FettersError> {
             }
             SprintOption::Set => {
                 if let Err(error) = set_sprint(&mut database.connection, config, &current_sprint) {
+                    println!("{}", error.red().bold());
+                }
+            }
+        },
+        Command::Stage(stage_option) => match stage_option {
+            StageOption::Add(mut query_args) => {
+                if let Err(error) =
+                    add_stage(&mut database.connection, &mut query_args, &current_sprint)
+                {
+                    println!("{}", error.red().bold());
+                }
+            }
+            StageOption::Delete(mut query_args) => {
+                if let Err(error) =
+                    delete_stage(&mut database.connection, &mut query_args, &current_sprint)
+                {
+                    println!("{}", error.red().bold());
+                }
+            }
+            StageOption::Tree(mut query_args) => {
+                if let Err(error) =
+                    show_stage_tree(&mut database.connection, &mut query_args, &current_sprint)
+                {
+                    println!("{}", error.red().bold());
+                }
+            }
+            StageOption::Update(mut query_args) => {
+                if let Err(error) =
+                    update_stage(&mut database.connection, &mut query_args, &current_sprint)
+                {
                     println!("{}", error.red().bold());
                 }
             }

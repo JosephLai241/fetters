@@ -44,6 +44,7 @@ pub fn add_job(
             TitleType::QueriedTitle(ref queried_title) => queried_title.name.to_string(),
         }),
         status: Some(status.name),
+        stages: None,
         link: link.clone(),
         notes: notes.clone(),
     };

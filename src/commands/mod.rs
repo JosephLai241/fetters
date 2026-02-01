@@ -8,4 +8,5 @@ pub mod insights;
 pub mod list;
 pub mod open;
 pub mod sprint;
+pub mod stage;
 pub mod update;

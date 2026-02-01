@@ -1,7 +1,8 @@
 //! Contains the job repository abstraction class.
 
-use diesel::dsl::count;
+use diesel::dsl::{count, sql};
 use diesel::prelude::*;
+use diesel::sql_types::Nullable;
 use diesel::sqlite::Sqlite;
 use diesel::{delete, insert_into, update};
 
@@ -84,6 +85,9 @@ impl<'a> JobRepository<'a> {
                 jobs::company_name,
                 titles::name.nullable(),
                 statuses::name.nullable(),
+                sql::<Nullable<diesel::sql_types::Integer>>(
+                    "NULLIF((SELECT COUNT(*) FROM interview_stages WHERE interview_stages.job_id = jobs.id), 0)",
+                ),
                 jobs::link,
                 jobs::notes,
             ))
@@ -115,7 +119,17 @@ impl<'a> JobRepository<'a> {
             query = query.filter(titles::name.like(format!("%{}%", title)));
         }
 
-        Ok(query.load::<TabledJob>(self.connection)?)
+        let mut jobs = query.load::<TabledJob>(self.connection)?;
+
+        if let Some(stages_filter) = query_args.stages {
+            if stages_filter == 0 {
+                jobs.retain(|j| j.stages.is_some());
+            } else {
+                jobs.retain(|j| j.stages == Some(stages_filter));
+            }
+        }
+
+        Ok(jobs)
     }
 
     /// Get the total number of jobs in the database.

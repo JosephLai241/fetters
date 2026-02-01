@@ -35,6 +35,11 @@
   - [Adding a Job](#adding-a-job)
   - [Updating or Deleting a Job](#updating-or-deleting-a-job)
   - [Listing/Searching Jobs](#listingsearching-jobs)
+  - [Managing Interview Stages](#managing-interview-stages)
+    - [Adding a Stage](#adding-a-stage)
+    - [Viewing the Stage Tree](#viewing-the-stage-tree)
+    - [Updating a Stage](#updating-a-stage)
+    - [Deleting a Stage](#deleting-a-stage)
   - [Display Job Insights](#display-job-insights)
   - [Opening Links](#opening-links)
   - [Exporting Jobs to XLSX](#exporting-jobs-to-xlsx)
@@ -58,6 +63,7 @@ This program enables you to:
 - Add, update, and delete job applications from the database.
 - List/search for tracked job applications. Each entry is color-coded based on the application status.
 - Conveniently open links to job applications in your browser (given a URL) or document viewer (given a local filepath).
+- Track interview stages for each job application with a color-coded tree view.
 - Display application insights (ie. How many applications are in progress, how many have been rejected, how many are in pending status, etc.).
 - Group job applications by sprints.
 - Export tracked job applications to an XLSX file.
@@ -230,6 +236,7 @@ Options:
   -n, --notes <NOTES>            Filter results by notes.
       --sprint <SPRINT>          Filter results by sprint name.
   -s, --status <STATUS>          Filter results by application status.
+      --stages [STAGES]          Filter by number of interview stages.
   -t, --title <TITLE>            Filter results by job title.
 ```
 
@@ -268,6 +275,7 @@ Options:
   -n, --notes <NOTES>            Filter results by notes.
       --sprint <SPRINT>          Filter results by sprint name.
   -s, --status <STATUS>          Filter results by application status.
+      --stages [STAGES]          Filter by number of interview stages.
   -t, --title <TITLE>            Filter results by job title.
 ```
 
@@ -278,6 +286,92 @@ Options:
 Jobs matching your query parameters will be displayed in a table.
 
 <img width="1820" height="943" alt="image" src="https://github.com/user-attachments/assets/41ba1eea-9502-4075-a0f7-52b40473e35d" />
+
+## Managing Interview Stages
+
+You can track interview stages for each job application. Each stage records a name (optional), status, date, and notes (optional). Stages are automatically numbered sequentially per job.
+
+Stage statuses are color-coded in the tree view:
+
+| Status    | Color  |
+| --------- | ------ |
+| SCHEDULED | Yellow |
+| PASSED    | Green  |
+| REJECTED  | Red    |
+
+> [!NOTE]
+>
+> If you are utilizing [different sprints](#managing-job-sprints), these subcommands will search for jobs within your current sprint that match your query.
+
+All stage subcommands support the same query options as `list`, `update`, and `delete` for selecting a job application:
+
+```
+fetters stage add [OPTIONS]
+fetters stage delete [OPTIONS]
+fetters stage tree [OPTIONS]
+fetters stage update [OPTIONS]
+
+Options:
+  -c, --company <COMPANY_NAME>   Filter results by company name.
+  -l, --link <LINK>              Filter results by links.
+  -n, --notes <NOTES>            Filter results by notes.
+      --sprint <SPRINT>          Filter results by sprint name.
+  -s, --status <STATUS>          Filter results by application status.
+      --stages [STAGES]          Filter by number of interview stages.
+  -t, --title <TITLE>            Filter results by job title.
+```
+
+> [!TIP]
+>
+> All query options support partial text searching via the SQL `LIKE` operator.
+
+### Adding a Stage
+
+Run the following command to add an interview stage to a job application:
+
+```
+fetters stage add [OPTIONS]
+```
+
+You will be prompted to select a job, then enter a name, status, date, and notes for the stage. A tree preview of all stages (with the new stage highlighted) is displayed before confirmation.
+
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 44 59" src="https://github.com/user-attachments/assets/834356e8-bf95-426e-89be-8998f434657b" />
+
+### Viewing the Stage Tree
+
+Run the following command to display a tree of interview stages for a job application:
+
+```
+fetters stage tree [OPTIONS]
+```
+
+Only jobs with at least one tracked stage will be shown in the selection menu. The tree displays each stage with its status, date, and notes (if present).
+
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 52 44" src="https://github.com/user-attachments/assets/761ca7d6-da10-46f9-9f14-6a6573ffeae4" />
+
+### Updating a Stage
+
+Run the following command to update an interview stage:
+
+```
+fetters stage update [OPTIONS]
+```
+
+After selecting a job and stage, a `MultiSelect` prompt lets you choose which fields to update (name, status, date, notes). A tree preview with the updated stage highlighted is displayed before confirmation.
+
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 52 04" src="https://github.com/user-attachments/assets/92bdd288-2ac3-4334-b86b-58929647ebea" />
+
+### Deleting a Stage
+
+Run the following command to delete an interview stage:
+
+```
+fetters stage delete [OPTIONS]
+```
+
+After selecting a job and stage, a tree preview with the stage to be deleted highlighted in red is displayed before confirmation. Remaining stages are automatically renumbered after deletion.
+
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 52 33" src="https://github.com/user-attachments/assets/142909e8-f90f-4d80-b51b-e56757a9e159" />
 
 ## Display Job Insights
 
@@ -318,6 +412,7 @@ Options:
   -n, --notes <NOTES>            Filter results by notes.
       --sprint <SPRINT>          Filter results by sprint name.
   -s, --status <STATUS>          Filter results by application status.
+      --stages [STAGES]          Filter by number of interview stages.
   -t, --title <TITLE>            Filter results by job title.
 ```
 
