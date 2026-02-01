@@ -335,6 +335,8 @@ fetters stage add [OPTIONS]
 
 You will be prompted to select a job, then enter a name, status, date, and notes for the stage. A tree preview of all stages (with the new stage highlighted) is displayed before confirmation.
 
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 44 59" src="https://github.com/user-attachments/assets/834356e8-bf95-426e-89be-8998f434657b" />
+
 ### Viewing the Stage Tree
 
 Run the following command to display a tree of interview stages for a job application:
@@ -344,6 +346,8 @@ fetters stage tree [OPTIONS]
 ```
 
 Only jobs with at least one tracked stage will be shown in the selection menu. The tree displays each stage with its status, date, and notes (if present).
+
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 52 44" src="https://github.com/user-attachments/assets/761ca7d6-da10-46f9-9f14-6a6573ffeae4" />
 
 ### Updating a Stage
 
@@ -355,6 +359,8 @@ fetters stage update [OPTIONS]
 
 After selecting a job and stage, a `MultiSelect` prompt lets you choose which fields to update (name, status, date, notes). A tree preview with the updated stage highlighted is displayed before confirmation.
 
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 52 04" src="https://github.com/user-attachments/assets/92bdd288-2ac3-4334-b86b-58929647ebea" />
+
 ### Deleting a Stage
 
 Run the following command to delete an interview stage:
@@ -364,6 +370,8 @@ fetters stage delete [OPTIONS]
 ```
 
 After selecting a job and stage, a tree preview with the stage to be deleted highlighted in red is displayed before confirmation. Remaining stages are automatically renumbered after deletion.
+
+<img width="1624" height="1061" alt="Screenshot 2026-01-31 at 19 52 33" src="https://github.com/user-attachments/assets/142909e8-f90f-4d80-b51b-e56757a9e159" />
 
 ## Display Job Insights
 
