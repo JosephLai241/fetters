@@ -58,3 +58,64 @@ impl<'a> StatusRepository<'a> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diesel::Connection;
+
+    fn setup_test_db() -> SqliteConnection {
+        let mut connection = SqliteConnection::establish(":memory:")
+            .expect("Failed to create in-memory database");
+        crate::utils::migrations::run_migrations(&mut connection)
+            .expect("Failed to run migrations");
+        connection
+    }
+
+    #[test]
+    fn test_get_all_statuses_empty_initially() {
+        let mut connection = setup_test_db();
+        let mut repo = StatusRepository {
+            connection: &mut connection,
+        };
+
+        let statuses = repo.get_all_statuses().unwrap();
+        assert_eq!(statuses.len(), 0);
+    }
+
+    #[test]
+    fn test_seed_statuses_creates_default_statuses() {
+        let mut connection = setup_test_db();
+        let mut repo = StatusRepository {
+            connection: &mut connection,
+        };
+
+        repo.seed_statuses().unwrap();
+
+        let statuses = repo.get_all_statuses().unwrap();
+        assert_eq!(statuses.len(), 7);
+
+        let names: Vec<String> = statuses.into_iter().map(|s| s.name).collect();
+        assert!(names.contains(&"GHOSTED".to_string()));
+        assert!(names.contains(&"HIRED".to_string()));
+        assert!(names.contains(&"IN PROGRESS".to_string()));
+        assert!(names.contains(&"NOT HIRING ANYMORE".to_string()));
+        assert!(names.contains(&"OFFER RECEIVED".to_string()));
+        assert!(names.contains(&"PENDING".to_string()));
+        assert!(names.contains(&"REJECTED".to_string()));
+    }
+
+    #[test]
+    fn test_seed_statuses_is_idempotent() {
+        let mut connection = setup_test_db();
+        let mut repo = StatusRepository {
+            connection: &mut connection,
+        };
+
+        repo.seed_statuses().unwrap();
+        repo.seed_statuses().unwrap();
+
+        let statuses = repo.get_all_statuses().unwrap();
+        assert_eq!(statuses.len(), 7);
+    }
+}

@@ -69,3 +69,44 @@ pub struct SprintUpdate<'a> {
     /// The end date for this sprint.
     pub end_date: Option<Option<&'a str>>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_queried_sprint_display_with_end_date() {
+        let sprint = QueriedSprint {
+            id: 1,
+            name: "2025-01-15".to_string(),
+            start_date: "2025-01-15".to_string(),
+            end_date: Some("2025-02-15".to_string()),
+            num_jobs: 5,
+        };
+        let display = format!("{}", sprint);
+        assert!(display.contains("2025-01-15"));
+        assert!(display.contains("Start Date: 2025-01-15"));
+        assert!(display.contains("2025-02-15"));
+    }
+
+    #[test]
+    fn test_queried_sprint_display_without_end_date() {
+        let sprint = QueriedSprint {
+            id: 1,
+            name: "2025-01-15".to_string(),
+            start_date: "2025-01-15".to_string(),
+            end_date: None,
+            num_jobs: 0,
+        };
+        let display = format!("{}", sprint);
+        assert!(display.contains("None"));
+    }
+
+    #[test]
+    fn test_sprint_update_default() {
+        let update = SprintUpdate::default();
+        assert!(update.name.is_none());
+        assert!(update.start_date.is_none());
+        assert!(update.end_date.is_none());
+    }
+}

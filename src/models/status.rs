@@ -33,3 +33,17 @@ impl Display for QueriedStatus {
         write!(f, "{}", self.name)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_queried_status_display() {
+        let status = QueriedStatus {
+            id: 1,
+            name: "PENDING".to_string(),
+        };
+        assert_eq!(format!("{}", status), "PENDING");
+    }
+}

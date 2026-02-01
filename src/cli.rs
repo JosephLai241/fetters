@@ -157,3 +157,253 @@ pub enum StageOption {
     /// Update an interview stage for an application.
     Update(QueryArgs),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    #[test]
+    fn test_parse_add_command() {
+        let cli = Cli::try_parse_from(["fetters", "add", "Google"]).unwrap();
+        match cli.command {
+            Command::Add { company } => assert_eq!(company, "Google"),
+            _ => panic!("Expected Add command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_banner_command() {
+        let cli = Cli::try_parse_from(["fetters", "banner"]).unwrap();
+        assert!(matches!(cli.command, Command::Banner));
+    }
+
+    #[test]
+    fn test_parse_list_command_with_no_args() {
+        let cli = Cli::try_parse_from(["fetters", "list"]).unwrap();
+        match cli.command {
+            Command::List(args) => {
+                assert!(args.company.is_none());
+                assert!(args.status.is_none());
+                assert!(args.title.is_none());
+            }
+            _ => panic!("Expected List command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_list_command_with_filters() {
+        let cli = Cli::try_parse_from([
+            "fetters", "list", "--company", "Google", "--status", "PENDING", "--title", "SWE",
+        ])
+        .unwrap();
+        match cli.command {
+            Command::List(args) => {
+                assert_eq!(args.company.as_deref(), Some("Google"));
+                assert_eq!(args.status.as_deref(), Some("PENDING"));
+                assert_eq!(args.title.as_deref(), Some("SWE"));
+            }
+            _ => panic!("Expected List command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_delete_command() {
+        let cli =
+            Cli::try_parse_from(["fetters", "delete", "--company", "Meta"]).unwrap();
+        match cli.command {
+            Command::Delete(args) => assert_eq!(args.company.as_deref(), Some("Meta")),
+            _ => panic!("Expected Delete command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_update_command() {
+        let cli =
+            Cli::try_parse_from(["fetters", "update", "--company", "Apple"]).unwrap();
+        match cli.command {
+            Command::Update(args) => assert_eq!(args.company.as_deref(), Some("Apple")),
+            _ => panic!("Expected Update command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_insights_command() {
+        let cli = Cli::try_parse_from(["fetters", "insights"]).unwrap();
+        assert!(matches!(cli.command, Command::Insights));
+    }
+
+    #[test]
+    fn test_parse_export_command() {
+        let cli = Cli::try_parse_from([
+            "fetters", "export", "-d", "/tmp", "-f", "export.xlsx",
+        ])
+        .unwrap();
+        match cli.command {
+            Command::Export(args) => {
+                assert_eq!(args.directory.as_deref(), Some("/tmp"));
+                assert_eq!(args.filename.as_deref(), Some("export.xlsx"));
+            }
+            _ => panic!("Expected Export command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_export_with_sprint() {
+        let cli = Cli::try_parse_from([
+            "fetters", "export", "-s", "my-sprint",
+        ])
+        .unwrap();
+        match cli.command {
+            Command::Export(args) => {
+                assert_eq!(args.sprint.as_deref(), Some("my-sprint"));
+            }
+            _ => panic!("Expected Export command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_sprint_current() {
+        let cli = Cli::try_parse_from(["fetters", "sprint", "current"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            Command::Sprint(SprintOption::Current)
+        ));
+    }
+
+    #[test]
+    fn test_parse_sprint_new_with_name() {
+        let cli =
+            Cli::try_parse_from(["fetters", "sprint", "new", "--name", "my-sprint"]).unwrap();
+        match cli.command {
+            Command::Sprint(SprintOption::New { name }) => {
+                assert_eq!(name.as_deref(), Some("my-sprint"));
+            }
+            _ => panic!("Expected Sprint New"),
+        }
+    }
+
+    #[test]
+    fn test_parse_sprint_new_without_name() {
+        let cli = Cli::try_parse_from(["fetters", "sprint", "new"]).unwrap();
+        match cli.command {
+            Command::Sprint(SprintOption::New { name }) => {
+                assert!(name.is_none());
+            }
+            _ => panic!("Expected Sprint New"),
+        }
+    }
+
+    #[test]
+    fn test_parse_sprint_show_all() {
+        let cli = Cli::try_parse_from(["fetters", "sprint", "show-all"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            Command::Sprint(SprintOption::ShowAll)
+        ));
+    }
+
+    #[test]
+    fn test_parse_sprint_set() {
+        let cli = Cli::try_parse_from(["fetters", "sprint", "set"]).unwrap();
+        assert!(matches!(cli.command, Command::Sprint(SprintOption::Set)));
+    }
+
+    #[test]
+    fn test_parse_stage_add() {
+        let cli =
+            Cli::try_parse_from(["fetters", "stage", "add", "--company", "Google"]).unwrap();
+        match cli.command {
+            Command::Stage(StageOption::Add(args)) => {
+                assert_eq!(args.company.as_deref(), Some("Google"));
+            }
+            _ => panic!("Expected Stage Add"),
+        }
+    }
+
+    #[test]
+    fn test_parse_stage_delete() {
+        let cli = Cli::try_parse_from(["fetters", "stage", "delete"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            Command::Stage(StageOption::Delete(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_stage_tree() {
+        let cli = Cli::try_parse_from(["fetters", "stage", "tree"]).unwrap();
+        assert!(matches!(cli.command, Command::Stage(StageOption::Tree(_))));
+    }
+
+    #[test]
+    fn test_parse_stage_update() {
+        let cli = Cli::try_parse_from(["fetters", "stage", "update"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            Command::Stage(StageOption::Update(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_config_edit() {
+        let cli = Cli::try_parse_from(["fetters", "config", "edit"]).unwrap();
+        assert!(matches!(cli.command, Command::Config(ConfigOption::Edit)));
+    }
+
+    #[test]
+    fn test_parse_config_show() {
+        let cli = Cli::try_parse_from(["fetters", "config", "show"]).unwrap();
+        assert!(matches!(cli.command, Command::Config(ConfigOption::Show)));
+    }
+
+    #[test]
+    fn test_parse_open_command() {
+        let cli =
+            Cli::try_parse_from(["fetters", "open", "--company", "Netflix"]).unwrap();
+        match cli.command {
+            Command::Open(args) => assert_eq!(args.company.as_deref(), Some("Netflix")),
+            _ => panic!("Expected Open command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_list_with_stages_flag_no_value() {
+        let cli = Cli::try_parse_from(["fetters", "list", "--stages"]).unwrap();
+        match cli.command {
+            Command::List(args) => assert_eq!(args.stages, Some(0)),
+            _ => panic!("Expected List command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_list_with_stages_flag_with_value() {
+        let cli = Cli::try_parse_from(["fetters", "list", "--stages", "3"]).unwrap();
+        match cli.command {
+            Command::List(args) => assert_eq!(args.stages, Some(3)),
+            _ => panic!("Expected List command"),
+        }
+    }
+
+    #[test]
+    fn test_parse_invalid_command_fails() {
+        assert!(Cli::try_parse_from(["fetters", "nonexistent"]).is_err());
+    }
+
+    #[test]
+    fn test_parse_missing_required_arg_fails() {
+        assert!(Cli::try_parse_from(["fetters", "add"]).is_err());
+    }
+
+    #[test]
+    fn test_query_args_default() {
+        let args = QueryArgs::default();
+        assert!(args.company.is_none());
+        assert!(args.link.is_none());
+        assert!(args.notes.is_none());
+        assert!(args.sprint.is_none());
+        assert!(args.status.is_none());
+        assert!(args.title.is_none());
+        assert!(args.stages.is_none());
+    }
+}
