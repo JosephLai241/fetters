@@ -33,3 +33,17 @@ impl Display for QueriedTitle {
         write!(f, "{}", self.name)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_queried_title_display() {
+        let title = QueriedTitle {
+            id: 1,
+            name: "Software Engineer".to_string(),
+        };
+        assert_eq!(format!("{}", title), "Software Engineer");
+    }
+}

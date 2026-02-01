@@ -18,3 +18,20 @@ impl Database {
         Ok(Database { connection })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_connection_in_memory() {
+        let db = Database::new_connection(":memory:");
+        assert!(db.is_ok());
+    }
+
+    #[test]
+    fn test_new_connection_invalid_path_fails() {
+        let db = Database::new_connection("/nonexistent/path/to/database.db");
+        assert!(db.is_err());
+    }
+}

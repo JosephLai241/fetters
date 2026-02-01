@@ -159,3 +159,115 @@ impl Display for TabledJob {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_tabled_job(status: Option<&str>) -> TabledJob {
+        TabledJob {
+            id: 1,
+            created: "2025-01-15".to_string(),
+            company_name: "Acme Corp".to_string(),
+            title: Some("Software Engineer".to_string()),
+            status: status.map(|s| s.to_string()),
+            stages: Some(2),
+            link: Some("https://example.com/apply".to_string()),
+            notes: Some("Great opportunity".to_string()),
+        }
+    }
+
+    #[test]
+    fn test_convert_to_row_with_all_fields() {
+        let job = make_tabled_job(Some("PENDING"));
+        let row = job.convert_to_row();
+        assert_eq!(row.len(), 6);
+        assert_eq!(row[0], "2025-01-15");
+        assert_eq!(row[1], "Acme Corp");
+        assert_eq!(row[2], "Software Engineer");
+        assert_eq!(row[3], "PENDING");
+        assert_eq!(row[4], "https://example.com/apply");
+        assert_eq!(row[5], "Great opportunity");
+    }
+
+    #[test]
+    fn test_convert_to_row_with_none_fields() {
+        let job = TabledJob {
+            id: 1,
+            created: "2025-01-15".to_string(),
+            company_name: "Test Co".to_string(),
+            title: None,
+            status: None,
+            stages: None,
+            link: None,
+            notes: None,
+        };
+        let row = job.convert_to_row();
+        assert_eq!(row[2], "N/A");
+        assert_eq!(row[3], "N/A");
+        assert_eq!(row[4], "");
+        assert_eq!(row[5], "");
+    }
+
+    #[test]
+    fn test_colorize_field_with_no_status() {
+        let job = TabledJob {
+            id: 1,
+            created: "2025-01-15".to_string(),
+            company_name: "Test".to_string(),
+            title: None,
+            status: None,
+            stages: None,
+            link: None,
+            notes: None,
+        };
+        assert_eq!(job.colorize_field("test"), "test");
+    }
+
+    #[test]
+    fn test_colorize_field_with_unknown_status() {
+        let job = make_tabled_job(Some("UNKNOWN_STATUS"));
+        let result = job.colorize_field("test");
+        assert_eq!(result, "test");
+    }
+
+    #[test]
+    fn test_colorize_field_with_known_statuses() {
+        let statuses = vec![
+            "GHOSTED",
+            "HIRED",
+            "IN PROGRESS",
+            "NOT HIRING ANYMORE",
+            "OFFER RECEIVED",
+            "PENDING",
+            "REJECTED",
+        ];
+        for status in statuses {
+            let job = make_tabled_job(Some(status));
+            let result = job.colorize_field("test");
+            assert!(
+                result.contains("test"),
+                "colorize_field should contain the input for status {}",
+                status
+            );
+        }
+    }
+
+    #[test]
+    fn test_tabled_job_display_contains_company() {
+        let job = make_tabled_job(Some("PENDING"));
+        let display = format!("{}", job);
+        assert!(display.contains("Acme Corp"));
+    }
+
+    #[test]
+    fn test_job_update_default() {
+        let update = JobUpdate::default();
+        assert!(update.company_name.is_none());
+        assert!(update.title_id.is_none());
+        assert!(update.status_id.is_none());
+        assert!(update.link.is_none());
+        assert!(update.notes.is_none());
+        assert!(update.sprint_id.is_none());
+    }
+}

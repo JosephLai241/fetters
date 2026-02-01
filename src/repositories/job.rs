@@ -228,3 +228,474 @@ impl<'a> JobRepository<'a> {
         Ok(jobs_per_sprint)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diesel::Connection;
+
+    use crate::models::sprint::NewSprint;
+    use crate::models::title::NewTitle;
+    use crate::repositories::sprint::SprintRepository;
+    use crate::repositories::statuses::StatusRepository;
+    use crate::repositories::title::TitleRepository;
+
+    fn setup_test_db() -> SqliteConnection {
+        let mut connection = SqliteConnection::establish(":memory:")
+            .expect("Failed to create in-memory database");
+        crate::utils::migrations::run_migrations(&mut connection)
+            .expect("Failed to run migrations");
+
+        let mut status_repo = StatusRepository {
+            connection: &mut connection,
+        };
+        status_repo.seed_statuses().expect("Failed to seed statuses");
+
+        connection
+    }
+
+    fn create_sprint(conn: &mut SqliteConnection, name: &str) -> QueriedSprint {
+        let mut repo = SprintRepository { connection: conn };
+        repo.add_job_sprint(NewSprint {
+            name,
+            start_date: "2025-01-01",
+            end_date: None,
+            num_jobs: &0,
+        })
+        .unwrap()
+    }
+
+    fn create_title(conn: &mut SqliteConnection, name: &str) -> crate::models::title::QueriedTitle {
+        let mut repo = TitleRepository { connection: conn };
+        repo.add_title(NewTitle { name }).unwrap()
+    }
+
+    fn get_status_id(conn: &mut SqliteConnection, target: &str) -> i32 {
+        let mut repo = StatusRepository { connection: conn };
+        let statuses = repo.get_all_statuses().unwrap();
+        statuses.into_iter().find(|s| s.name == target).unwrap().id
+    }
+
+    #[test]
+    fn test_add_job() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        let job = repo
+            .add_job(NewJob {
+                company_name: "Google",
+                created: "2025-01-15 10:00:00".to_string(),
+                title_id: title.id,
+                status_id,
+                link: Some("https://google.com/careers"),
+                notes: Some("Dream job"),
+                sprint_id: sprint.id,
+            })
+            .unwrap();
+
+        assert_eq!(job.company_name, "Google");
+        assert_eq!(job.title_id, title.id);
+        assert_eq!(job.status_id, status_id);
+        assert_eq!(job.link.as_deref(), Some("https://google.com/careers"));
+        assert_eq!(job.notes.as_deref(), Some("Dream job"));
+        assert_eq!(job.sprint_id, sprint.id);
+    }
+
+    #[test]
+    fn test_add_job_increments_sprint_count() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+
+        let mut sprint_repo = SprintRepository {
+            connection: &mut conn,
+        };
+        let updated_sprint = sprint_repo.get_current_sprint("test-sprint").unwrap();
+        assert_eq!(updated_sprint.num_jobs, 1);
+    }
+
+    #[test]
+    fn test_update_job() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        let job = repo
+            .add_job(NewJob {
+                company_name: "Google",
+                created: "2025-01-15 10:00:00".to_string(),
+                title_id: title.id,
+                status_id,
+                link: None,
+                notes: None,
+                sprint_id: sprint.id,
+            })
+            .unwrap();
+
+        let updated = repo
+            .update_job(
+                job.id,
+                JobUpdate {
+                    company_name: Some("Alphabet"),
+                    notes: Some("Updated notes"),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(updated.company_name, "Alphabet");
+        assert_eq!(updated.notes.as_deref(), Some("Updated notes"));
+    }
+
+    #[test]
+    fn test_delete_job() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        let job = repo
+            .add_job(NewJob {
+                company_name: "Google",
+                created: "2025-01-15 10:00:00".to_string(),
+                title_id: title.id,
+                status_id,
+                link: None,
+                notes: None,
+                sprint_id: sprint.id,
+            })
+            .unwrap();
+
+        let deleted = repo.delete_job(job.id).unwrap();
+        assert_eq!(deleted.id, job.id);
+        assert_eq!(deleted.company_name, "Google");
+    }
+
+    #[test]
+    fn test_delete_job_decrements_sprint_count() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        let job = repo
+            .add_job(NewJob {
+                company_name: "Google",
+                created: "2025-01-15 10:00:00".to_string(),
+                title_id: title.id,
+                status_id,
+                link: None,
+                notes: None,
+                sprint_id: sprint.id,
+            })
+            .unwrap();
+
+        repo.delete_job(job.id).unwrap();
+
+        let mut sprint_repo = SprintRepository {
+            connection: &mut conn,
+        };
+        let updated_sprint = sprint_repo.get_current_sprint("test-sprint").unwrap();
+        assert_eq!(updated_sprint.num_jobs, 0);
+    }
+
+    #[test]
+    fn test_list_jobs_returns_jobs_in_sprint() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+        repo.add_job(NewJob {
+            company_name: "Meta",
+            created: "2025-01-16 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+
+        let query_args = QueryArgs::default();
+        let jobs = repo.list_jobs(&query_args, &sprint).unwrap();
+        assert_eq!(jobs.len(), 2);
+    }
+
+    #[test]
+    fn test_list_jobs_filters_by_company() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+        repo.add_job(NewJob {
+            company_name: "Meta",
+            created: "2025-01-16 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+
+        let query_args = QueryArgs {
+            company: Some("Goo".to_string()),
+            ..Default::default()
+        };
+        let jobs = repo.list_jobs(&query_args, &sprint).unwrap();
+        assert_eq!(jobs.len(), 1);
+        assert_eq!(jobs[0].company_name, "Google");
+    }
+
+    #[test]
+    fn test_list_jobs_filters_by_status() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let pending_id = get_status_id(&mut conn, "PENDING");
+        let rejected_id = get_status_id(&mut conn, "REJECTED");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id: pending_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+        repo.add_job(NewJob {
+            company_name: "Meta",
+            created: "2025-01-16 10:00:00".to_string(),
+            title_id: title.id,
+            status_id: rejected_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+
+        let query_args = QueryArgs {
+            status: Some("REJECTED".to_string()),
+            ..Default::default()
+        };
+        let jobs = repo.list_jobs(&query_args, &sprint).unwrap();
+        assert_eq!(jobs.len(), 1);
+        assert_eq!(jobs[0].company_name, "Meta");
+    }
+
+    #[test]
+    fn test_list_jobs_empty_when_no_match() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+
+        let query_args = QueryArgs {
+            company: Some("Nonexistent".to_string()),
+            ..Default::default()
+        };
+        let jobs = repo.list_jobs(&query_args, &sprint).unwrap();
+        assert_eq!(jobs.len(), 0);
+    }
+
+    #[test]
+    fn test_list_jobs_across_sprints() {
+        let mut conn = setup_test_db();
+        let sprint1 = create_sprint(&mut conn, "sprint-1");
+        let sprint2 = create_sprint(&mut conn, "sprint-2");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint1.id,
+        })
+        .unwrap();
+        repo.add_job(NewJob {
+            company_name: "Meta",
+            created: "2025-01-16 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint2.id,
+        })
+        .unwrap();
+
+        // Searching by sprint name should find across sprints
+        let query_args = QueryArgs {
+            sprint: Some("sprint".to_string()),
+            ..Default::default()
+        };
+        let jobs = repo.list_jobs(&query_args, &sprint1).unwrap();
+        assert_eq!(jobs.len(), 2);
+    }
+
+    #[test]
+    fn test_count_jobs_per_status() {
+        let mut conn = setup_test_db();
+        let sprint = create_sprint(&mut conn, "test-sprint");
+        let title = create_title(&mut conn, "SWE");
+        let pending_id = get_status_id(&mut conn, "PENDING");
+        let rejected_id = get_status_id(&mut conn, "REJECTED");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id: pending_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+        repo.add_job(NewJob {
+            company_name: "Meta",
+            created: "2025-01-16 10:00:00".to_string(),
+            title_id: title.id,
+            status_id: rejected_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint.id,
+        })
+        .unwrap();
+
+        let insights = repo.count_jobs_per_status(&sprint).unwrap();
+        assert_eq!(insights.len(), 2);
+
+        let pending = insights.iter().find(|i| i.label == "PENDING").unwrap();
+        assert_eq!(pending.count, 1);
+
+        let rejected = insights.iter().find(|i| i.label == "REJECTED").unwrap();
+        assert_eq!(rejected.count, 1);
+    }
+
+    #[test]
+    fn test_count_jobs_per_sprint() {
+        let mut conn = setup_test_db();
+        let sprint1 = create_sprint(&mut conn, "sprint-1");
+        let sprint2 = create_sprint(&mut conn, "sprint-2");
+        let title = create_title(&mut conn, "SWE");
+        let status_id = get_status_id(&mut conn, "PENDING");
+
+        let mut repo = JobRepository {
+            connection: &mut conn,
+        };
+        repo.add_job(NewJob {
+            company_name: "Google",
+            created: "2025-01-15 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint1.id,
+        })
+        .unwrap();
+        repo.add_job(NewJob {
+            company_name: "Meta",
+            created: "2025-01-16 10:00:00".to_string(),
+            title_id: title.id,
+            status_id,
+            link: None,
+            notes: None,
+            sprint_id: sprint2.id,
+        })
+        .unwrap();
+
+        let insights = repo.count_jobs_per_sprint(&sprint1).unwrap();
+        assert!(insights.len() >= 2);
+
+        let s1 = insights.iter().find(|i| i.label == "sprint-1").unwrap();
+        assert_eq!(s1.count, 1);
+
+        let s2 = insights.iter().find(|i| i.label == "sprint-2").unwrap();
+        assert_eq!(s2.count, 1);
+    }
+}

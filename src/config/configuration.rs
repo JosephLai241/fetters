@@ -97,3 +97,68 @@ impl Config {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn test_get_config_dir_path_returns_path() {
+        let path = Config::get_config_dir_path();
+        assert!(path.is_ok());
+        let path = path.unwrap();
+        assert!(path.to_string_lossy().contains("fetters"));
+    }
+
+    #[test]
+    fn test_save_and_load_config_roundtrip() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("fetters.toml");
+
+        let config = Config {
+            config_path: config_path.clone(),
+            current_sprint: "2025-01-15".to_string(),
+            db_path: "/tmp/test.db".to_string(),
+        };
+        config.save_to_file().unwrap();
+
+        let content = fs::read_to_string(&config_path).unwrap();
+        let loaded: Config = toml::from_str(&content).unwrap();
+        assert_eq!(loaded.current_sprint, "2025-01-15");
+        assert_eq!(loaded.db_path, "/tmp/test.db");
+    }
+
+    #[test]
+    fn test_create_default_config_creates_file_and_parents() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("subdir").join("fetters.toml");
+
+        Config::create_default_config(&config_path).unwrap();
+        assert!(config_path.exists());
+    }
+
+    #[test]
+    fn test_save_to_file_overwrites_existing() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("fetters.toml");
+
+        let config1 = Config {
+            config_path: config_path.clone(),
+            current_sprint: "sprint-1".to_string(),
+            db_path: "/tmp/test.db".to_string(),
+        };
+        config1.save_to_file().unwrap();
+
+        let config2 = Config {
+            config_path: config_path.clone(),
+            current_sprint: "sprint-2".to_string(),
+            db_path: "/tmp/test.db".to_string(),
+        };
+        config2.save_to_file().unwrap();
+
+        let content = fs::read_to_string(&config_path).unwrap();
+        let loaded: Config = toml::from_str(&content).unwrap();
+        assert_eq!(loaded.current_sprint, "sprint-2");
+    }
+}

@@ -67,3 +67,62 @@ impl From<&str> for FettersError {
         Self::SheetNameError(value.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_str_creates_sheet_name_error() {
+        let error: FettersError = "bad sheet name".into();
+        match error {
+            FettersError::SheetNameError(msg) => assert_eq!(msg, "bad sheet name"),
+            _ => panic!("Expected SheetNameError"),
+        }
+    }
+
+    #[test]
+    fn test_error_display_application_error() {
+        let error = FettersError::ApplicationError;
+        assert_eq!(
+            format!("{}", error),
+            "Could not retrieve system application directories!"
+        );
+    }
+
+    #[test]
+    fn test_error_display_migration_failure() {
+        let error = FettersError::MigrationFailure;
+        assert_eq!(format!("{}", error), "Failed to run migrations!");
+    }
+
+    #[test]
+    fn test_error_display_no_jobs_available() {
+        let error = FettersError::NoJobsAvailable("sprint-1".to_string());
+        assert_eq!(
+            format!("{}", error),
+            "No job applications tracked for the current sprint [sprint-1]"
+        );
+    }
+
+    #[test]
+    fn test_error_display_sheet_name_error() {
+        let error = FettersError::SheetNameError("bad name".to_string());
+        assert_eq!(format!("{}", error), "Set sheet name error: bad name");
+    }
+
+    #[test]
+    fn test_error_display_sprint_name_conflict() {
+        let error = FettersError::SprintNameConflict("2025-01-15".to_string());
+        assert_eq!(
+            format!("{}", error),
+            "There is already a sprint with name 2025-01-15. Try renaming the sprint."
+        );
+    }
+
+    #[test]
+    fn test_error_display_unknown_error() {
+        let error = FettersError::UnknownError("something broke".to_string());
+        assert_eq!(format!("{}", error), "something broke");
+    }
+}
